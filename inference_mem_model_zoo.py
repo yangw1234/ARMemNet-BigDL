@@ -39,6 +39,10 @@ if __name__ == "__main__":
                                    test_len=config.test_len,
                                    seed=config.seed)
 
+    test_x = np.concatenate([test_x] * 200, axis=0)
+    test_m = np.concatenate([test_m] * 200, axis=0)
+    test_y = np.concatenate([test_y] * 200, axis=0)
+
     model_dir = config.model_dir
 
     #  export a TensorFlow model to frozen inference graph.
@@ -64,7 +68,11 @@ if __name__ == "__main__":
                             distributed=True)
 
     result_dir = make_date_dir(os.path.join(config.model, 'zoo_results/'))
-
-    outputs.saveAsTextFile(os.path.join(result_dir, "result.txt"))
+    import time
+    start = time.time()
+    outputs.collect()
+    # outputs.saveAsTextFile(os.path.join(result_dir, "result.txt"))
+    end = time.time()
+    print("time is {}".format((end - start)))
 
 

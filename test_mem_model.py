@@ -14,6 +14,9 @@ def main():
     logger.info("=======Model Configuration=======")
     logger.info(config.desc)
     logger.info("=================================")
+    config.model_dir = "/home/yang/sources/zoo/model/model_save"
+    config.latest_model=False
+
 
     try:
         _, _, test_x, _, _, test_y, _, _, test_m, test_dt = load_agg_selected_data_mem(data_path=config.data_path, \
@@ -29,12 +32,17 @@ def main():
         if config.latest_model:
             model_dir = find_latest_dir(os.path.join(config.model, 'model_save/'))
         else:
-            if not model_dir:
+            if not config.model_dir:
                 raise Exception("model_dir or latest_model=True should be defined in config")
             model_dir = config.model_dir
 
         model.restore_session(model_dir)
-        if len(test_y) > 100000:
+        test_x = np.concatenate([test_x] * 200, axis=0)
+        test_m = np.concatenate([test_m] * 200, axis=0)
+        test_y = np.concatenate([test_y] * 200, axis=0)
+
+        start = time()
+        if True or len(test_y) > 100000:
             # Batch mode
             test_data = list(zip(test_x, test_m, test_y))
             test_batches = batch_loader(test_data, config.batch_size)
@@ -47,7 +55,10 @@ def main():
 
         else:
             # Not batch mode
+
             total_pred, test_loss, test_rse, test_smape, test_mae = model.eval(test_x, test_m, test_y)
+        end = time()
+        print("time is {}".format((end - start)))
 
         result_dir = make_date_dir(os.path.join(config.model, 'results/'))
         np.save(os.path.join(result_dir, 'pred.npy'), total_pred)
@@ -55,6 +66,7 @@ def main():
         np.save(os.path.join(result_dir, 'test_dt.npy'), test_dt)
         logger.info("Saving results at {}".format(result_dir))
         logger.info("Testing finished, exit program")
+
 
     except:
         logger.exception("ERROR")
